@@ -1,0 +1,34 @@
+services:
+  backend:
+    build: ./backend
+    volumes:
+      - .:/workspace # Project root → /workspace
+      - ./memory:/workspace/memory # Persistent memory (SQLite + ChromaDB)
+      - d:/:/host_d # Full D: drive access
+      - c:/Users:/host_users # User folders (Desktop, Downloads, Documents)
+      - //tplserver/Materials:/host_capex # Network server access (Materials)
+      - ./backend/app:/app/app # Hot reload for development
+    env_file: .env
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # Don't overwrite container's node_modules
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+networks:
+  default:
+    name: procureai_net
